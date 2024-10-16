@@ -1,30 +1,22 @@
-use poise::serenity_prelude::{self as serenity, User};
+use poise::serenity_prelude as serenity;
+
 
 mod config;
+mod commands;
 
 struct Data{} // bot data like users
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
-#[poise::command(slash_command, prefix_command)]
-async fn age(
-    ctx: Context<'_>,
-    #[description = "Selected User"] user: Option<User>
-) -> Result<(), Error> {
-    let u = user.as_ref().unwrap_or_else(|| ctx.author());
-    let response = format!("{}'s account was created at {}", u.name, u.created_at());
-    ctx.reply(response).await?;
-    Ok(())
-}
 
 #[tokio::main]
 async fn main() {
     let config = config::Config::from_dotenv().expect("Failed to load config.");
     let intents = serenity::GatewayIntents::non_privileged();
-
+    
     let framework = poise::Framework::builder()
     .options(poise::FrameworkOptions {
-        commands: vec![age()],
+        commands: commands::get_commands(),
         ..Default::default()
     })
     .setup(|ctx, _ready, framework| {
