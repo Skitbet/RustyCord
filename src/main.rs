@@ -7,6 +7,7 @@ use poise::serenity_prelude as serenity;
 mod config;
 mod commands;
 mod models;
+mod utils;
 
 struct Data{
     db: Arc<Client>,

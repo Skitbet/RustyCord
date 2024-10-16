@@ -1,9 +1,7 @@
-use std::fmt::format;
+use mongodb::{bson::{DateTime, Uuid}, Collection};
+use poise::{serenity_prelude::{CreateEmbed, PermissionOverwrite, PermissionOverwriteType, Permissions, RoleId}, CreateReply};
 
-use mongodb::{bson::{uuid, DateTime, Uuid}, Collection};
-use poise::{serenity_prelude::{self, CreateChannel, CreateEmbed, PermissionOverwrite, PermissionOverwriteType, Permissions, RoleId}, CreateReply};
-
-use crate::{models::ticket::Ticket, Context, Error};
+use crate::{models::ticket::Ticket, utils::channel::create_text_channel, Context, Error};
 
 #[poise::command(slash_command, prefix_command)]
 pub async fn open_ticket(ctx: Context<'_>) -> Result<(), Error> {
@@ -15,9 +13,9 @@ pub async fn open_ticket(ctx: Context<'_>) -> Result<(), Error> {
     let short_id = &ticket_id[..6]; // use first 6 chars of the uuid
 
     let guild = ctx.guild_id().unwrap();
-    let channel_name = format!("ticker-{}", short_id);
+    let channel_name = format!("ticket-{}-{}", ctx.author().name, short_id);
 
-    let everyone_role = RoleId::new(1119133268235788328);
+    let everyone_role = RoleId::new(1119133268235788328); // there gotta be a better way to get default role?
     let staff_role_id = RoleId::new(1119135390574575686);
     let user_id = ctx.author().id;
 
@@ -40,27 +38,23 @@ pub async fn open_ticket(ctx: Context<'_>) -> Result<(), Error> {
         }
     ];
 
-    let new_channel = guild
-        .create_channel(&ctx.serenity_context().http,
-            CreateChannel::new(channel_name)
-            .permissions(permissions)
-            .kind(serenity_prelude::ChannelType::Text)
-    ).await?;
+    let new_channel_id = create_text_channel(guild, channel_name, permissions, &ctx).await?;
 
     let ticket = Ticket {
-        user_id: ctx.author().name.clone(),
+        user_id: ctx.author().id.to_string(),
         username: ctx.author().name.clone(),
         ticket_id: ticket_id.clone(),
         created_at: DateTime::now(),
         status: "Open".to_string(),
         messages: vec![],
-        channel_id: new_channel.id.to_string(),
+        channel_id: new_channel_id.to_string(),
     };
 
-    let embed = CreateEmbed::default()
-    .description(format!("Ticket opened successfully, channel created: <#{}>", new_channel.id));
+    Ticket::create_ticket(ticket, &tickets_col).await?;
 
-    tickets_col.insert_one(ticket).await?;
+    let embed = CreateEmbed::default()
+    .description(format!("Ticket opened successfully, channel created: <#{}>", new_channel_id.to_string()));
+
     ctx.send(CreateReply::default()
         .embed(embed)).await?;
 
