@@ -23,7 +23,7 @@ impl Ticket {
     pub async fn close_ticket_by_chan(channel: ChannelId, ticket_col: &Collection<Ticket>) -> Result<bool, mongodb::error::Error> {
         let filter = doc! { "channel_id": channel.to_string() as String };
 
-        if let Some(ticket) = ticket_col.find_one(filter.clone()).await? {
+        if let Some(_ticket) = ticket_col.find_one(filter.clone()).await? {
             // ticket found so delete it
             let result = ticket_col.delete_one(filter).await?;
             

@@ -1,7 +1,7 @@
 use mongodb::{bson::{DateTime, Uuid}, Collection};
 use poise::{serenity_prelude::{CreateEmbed, CreateMessage, PermissionOverwrite, PermissionOverwriteType, Permissions}, ApplicationContext, CreateReply, Modal};
 
-use crate::{models::ticket::Ticket, utils::{channel::create_text_channel, color::GREEN, EVERYONE_ID, SUPPORT_ID}, Context, Data, Error};
+use crate::{models::ticket::Ticket, utils::{channel::create_text_channel, color::GREEN, EVERYONE_ID, SUPPORT_ID}, Data, Error};
 
 #[derive(Debug, poise::Modal)]
 #[allow(dead_code)]
@@ -72,7 +72,7 @@ pub async fn openticket(ctx: ApplicationContext<'_, Data, Error>) -> Result<(), 
     let start_embed = CreateEmbed::default()
     .title(format!("Ticket ID: {}", ticket_id))
     .description(format!(
-        "<@{}> This is your ticket, below are the stats you provided! If you have any other information please provide it while waiting for a support team member.",
+        "<@{}> This is your ticket, below is the information you provided! If you have any other information please provide it while waiting for a support team member.",
         user_id.to_string()
     ))
     .field("Ticket Reason:", model_data.reason_input.clone(), true)

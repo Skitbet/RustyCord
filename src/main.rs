@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use mongodb::Client;
-use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::{self as serenity, ActivityData};
 
 
 mod config;
@@ -26,6 +26,9 @@ async fn main() {
 
     let framework = poise::Framework::builder()
     .options(poise::FrameworkOptions {
+        event_handler: |ctx, event, framework, data| {
+            Box::pin(event_handler(ctx, event, framework, data))
+        },
         commands: commands::get_commands(),
         ..Default::default()
     })
@@ -40,7 +43,23 @@ async fn main() {
     .build();
 
     let client = serenity::ClientBuilder::new(config.token, intents)
-    .framework(framework)
-    .await;
+        .framework(framework)
+        .await;
     client.unwrap().start().await.unwrap();
+}
+
+async fn event_handler(
+    ctx: &serenity::Context,
+    event: &serenity::FullEvent,
+    _framework: poise::FrameworkContext<'_, Data, Error>,
+    data: &Data,
+) -> Result<(), Error> {
+    match event {
+        serenity::FullEvent::Ready { data_about_bot, .. } => {
+            println!("Logged in as {}", data_about_bot.user.name);
+            ctx.set_activity(Some(ActivityData::watching("Stimky Wumbo")));
+        }
+        _ => {}
+    }
+    Ok(())
 }
